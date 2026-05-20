@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="hi" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>मात्रात्मक रणनीति डैशबोर्ड और ह्यूरिस्टिक सत्यापन पोर्टल</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        /* पेशेवर टर्मिनल स्क्रॉलबार */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="h-full font-mono flex flex-col overflow-hidden antialiased">
+
+    <header class="border-b border-slate-800 bg-slate-900 px-6 py-4 flex items-center justify-between shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+            <h1 class="text-sm md:text-lg font-bold tracking-wider text-slate-200">QUANT-PORTAL v4.2 // HEURISTIC PIPELINE</h1>
+        </div>
+        <div class="text-xs text-slate-400">
+            सिस्टम स्थिति: <span class="text-emerald-400 font-bold">सक्रिय (ONLINE)</span>
+        </div>
+    </header>
+
+    <main class="flex flex-1 overflow-hidden min-h-0">
+        
+        <aside class="w-80 border-r border-slate-800 bg-slate-900/50 p-6 overflow-y-auto flex flex-col justify-between shrink-0">
+            <div class="space-y-6">
+                <div>
+                    <h2 class="text-xs font-semibold text-slate-400 tracking-wider uppercase mb-3">1. तकनीकी संकेतक (Indicators)</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">EMA लुकबैक अवधि (N)</label>
+                            <input type="number" id="emaPeriod" value="20" min="5" max="100" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs text-emerald-400 focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">RSI लुकबैक अवधि</label>
+                            <input type="number" id="rsiPeriod" value="14" min="5" max="50" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs text-emerald-400 focus:outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xs font-semibold text-slate-400 tracking-wider uppercase mb-3">2. सिंथेटिक डेटा मॉडल</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">बाजार का प्रकार (Market Regime)</label>
+                            <select id="marketRegime" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs text-emerald-400 focus:outline-none focus:border-emerald-500">
+                                <option value="trendingUp">तेजी का रुख (Bull Market)</option>
+                                <option value="trendingDown">मंदी का रुख (Bear Market)</option>
+                                <option value="volatileChop">अत्यधिक अस्थिर (Volatile Chop)</option>
+                            </select>
+                        </div>
+                        <button id="btnRegenerate" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 rounded py-2 text-xs font-bold transition">
+                            नया डेटा जेनरेट करें
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-800/80 pt-6">
+                    <h2 class="text-xs font-semibold text-slate-400 tracking-wider uppercase mb-3">3. स्क्रीनशॉट और सत्यापन (Verification)</h2>
+                    <div class="space-y-3">
+                        <button id="btnCaptureChart" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded py-2.5 text-xs font-bold transition flex items-center justify-center shadow-lg">
+                            <span>वैध चार्ट कैप्चर करें</span>
+                        </button>
+                        <button id="btnCaptureError" class="w-full bg-rose-600 hover:bg-rose-500 text-white rounded py-2.5 text-xs font-bold transition flex items-center justify-center shadow-lg">
+                            <span>अमान्य क्षेत्र कैप्चर करें</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-800/80 pt-6">
+                    <h2 class="text-xs font-semibold text-slate-400 tracking-wider uppercase mb-3 font-mono">4. बाहरी छवि अपलोड परीक्षण</h2>
+                    <p class="text-[10px] text-slate-400 mb-2">चार्ट डिटेक्टर का परीक्षण करने के लिए कोई भी फोटो अपलोड करें।</p>
+                    <input type="file" id="externalFile" accept="image/*" class="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
+                </div>
+            </div>
+
+            <div class="text-[10px] text-slate-500 border-t border-slate-800/50 pt-4 mt-6">
+                QUANTITATIVE ENGINE v4.2<br>
+                पिक्सेल सटीकता: दशमलव चतुर्थ 
+            </div>
+        </aside>
+
+        <section class="flex-1 flex flex-col overflow-hidden bg-slate-950">
+            
+            <div class="border-b border-slate-800 bg-slate-900/30 px-6 py-2.5 flex it[span_46](start_span)[span_46](end_span)ems-center shrink-0">
+                <span class="text-xs font-bold text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800/30">सक्रिय सिमुलेशन व्यू</span>
+                <span class="text-slate-600 mx-2">|</span>
+                <span class="text-xs text-slate-400 font-mono">BTC/USD Hourly Contract</span>
+            </div>
+
+            <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-6" id="dashboardViewport">
+                
+                <div id="chartCaptureArea" class="bg-slate-900 border border-slate-800 rounded-lg p-5 space-y-4 shadow-xl">
+                    <div class="flex justify-between items-center border-b border-slate-800/60 pb-3">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-xs font-bold text-slate-200 uppercase tracking-wider">BTCUSD चार्ट और संगम रणनीति (EMA+RSI)</span>
+                        </div>
+                        <div class="flex items-center space-x-4 text-[11px]">
+                            <span class="text-slate-400">EMA(<span id="emaPeriodLabel">20</span>): <span id="currentEmaValue" class="text-cyan-400 font-bold">--</span></span>
+                            <span class="text-slate-400">RSI(<span id="rsiPeriodLabel">14</span>): <span id="currentRsiValue" class="text-purple-400 font-bold">--</span></span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="relative bg-slate-950 border border-slate-800 rounded overflow-hidden">
+                            <canvas id="priceCanvas" class="w-full block h-72"></canvas>
+                        </div>
+                        <div class="relative bg-slate-950 border border-slate-800 rounded overflow-hidden">
+                            <canvas id="rsiCanvas" class="w-full block h-36"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="blankCaptureArea" class="bg-slate-900 border border-slate-800 rounded-lg p-8 text-center space-y-3">
+                    <div class="max-w-md mx-auto py-4">
+                        <div class="text-rose-500 text-2xl mb-2">⚠</div>
+                        <h3 class="text-xs font-bold text-slate-200 tracking-wider uppercase mb-1">सिस्टम विन्यास और टेक्स्ट ब्लॉक</h3>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            यह क्षेत्र केवल सिस्टम पैरामीटर सेटिंग्स, लॉग फ़ाइलों और एपीआई कुंजी विन्यासों के लिए है। इसमें कोई वित्तीय ग्रिडलाइन या कैंडलस्टिक पैटर्न शामिल नहीं हैं। इसका स्क्रीनशॉट लेने पर सत्यापन विफल हो जाएगा।
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <footer class="h-64 border-t border-slate-800 bg-slate-900/70 p-5 flex space-x-6 shrink-0">
+                <div class="flex-1 flex flex-col min-w-0">
+                    <h3 class="text-xs font-bold text-slate-400 tracking-wider uppercase mb-2 flex items-center">
+                        <span class="w-2 h-2 rounded-full bg-cyan-500 mr-2"></span>
+                        पिक्सेल विश्लेषण लॉग (Live Diagnostic Console)
+                    </h3>
+                    <div id="diagnosticsLog" class="flex-1 bg-slate-950 border border-slate-800 rounded p-3 overflow-y-auto text-[10px] text-slate-300 space-y-1 font-mono">
+                        <div class="text-slate-500">// सिस्टम प्रारंभ। विश्लेषण की प्रतीक्षा है...</div>
+                    </div>
+                </div>
+
+                <div class="w-96 flex flex-col shrink-0">
+                    <h3 class="text-xs font-bold text-slate-400 tracking-wider uppercase mb-2 flex items-center">
+                        <span class="w-2 h-2 rounded-full bg-purple-500 mr-2"></span>
+                        क्रमागत स्क्रीनशॉट पूर्वावलोकन (Captured Frame Preview)
+                    </h3>
+                    <div id="screenshotPreviewContainer" class="flex-1 bg-slate-950 border border-slate-800 rounded flex flex-col items-center justify-center p-3 overflow-hidden relative">
+                        <div id="previewPlaceholder" class="text-[10px] text-slate-500 text-center uppercase tracking-wider">
+                            कोई डेटा कैप्चर नहीं किया गया
+                        </div>
+                        <img id="screenshotPreview" class="hidden max-h-full max-w-full object-contain rounded border border-slate-800 shadow">
+                        
+                        <div id="verificationResultBadge" class="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[9px] font-bold border hidden">
+                            VERIFICATION: PASS
+                        </div>
+                    </div>
+                </div>
+            </footer>
+
+        </section>
+
+    </main>
+
+    <div id="errorToast" class="fixed top-6 right-6 z-50 bg-rose-950/95 border-2 border-rose-600 text-rose-200 px-6 py-4 rounded-lg shadow-2xl max-w-md transform translate-x-[120%] transition-transform duration-300 ease-out flex items-start space-x-3">
+        <div class="text-rose-500 text-xl font-bold shrink-0">❌</div>
+        <div>
+            <h4 class="text-xs font-bold tracking-wider uppercase text-rose-400 mb-1">छवि सत्यापन त्रुटि (Verification Failed)</h4>
+            <p id="errorMsg" class="text-[10px] leading-relaxed font-mono">कैप्चर की गई छवि में ग्रिडलाइन या वित्तीय पैटर्न नहीं मिले। प्रणाली अवरुद्ध कर दी गई है।</p>
+        </div>
+    </div>
+
+    <script>
+        let mockMarketData =;
+        const canvasPadding = { top: 20, right: 60, bottom: 20, left: 20 };
+
+        const emaPeriodInput = document.getElementById('emaPeriod');
+        const rsiPeriodInput = document.getElementById('rsiPeriod');
+        const marketRegimeSelect = document.getElementById('marketRegime');
+        const btnRegenerate = document.getElementById('btnRegenerate');
+        const btnCaptureChart = document.getElementById('btnCaptureChart');
+        const btnCaptureError = document.getElementById('btnCaptureError');
+        const externalFileInput = document.getElementById('externalFile');
+        const diagnosticsLog = document.getElementById('diagnosticsLog');
+        const screenshotPreview = document.getElementById('screenshotPreview');
+        const previewPlaceholder = document.getElementById('previewPlaceholder');
+        const verificationResultBadge = document.getElementById('verificationResultBadge');
+        const errorToast = document.getElementById('errorToast');
+        const errorMsg = document.getElementById('errorMsg');
+
+        const emaPeriodLabel = document.getElementById('emaPeriodLabel');
+        const rsiPeriodLabel = document.getElementById('rsiPeriodLabel');
+        const currentEmaValueLabel = document.getElementById('currentEmaValue');
+        const currentRsiValueLabel = document.getElementById('currentRsiValue');
+
+        const priceCanvas = document.getElementById('priceCanvas');
+        const rsiCanvas = document.getElementById('rsiCanvas');
+
+        // कैनवास आकार अनुकूलन
+        function initCanvasScale(canvas) {
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            return { width: rect.width, height: rect.height };
+        }
+
+        // सिंथेटिक मार्केट डेटा जनरेशन [span_124](start_span)[span_124](end_span)
+        function generateHistoricalData() {
+            const emaPeriod = parseInt(emaPeriodInput.value);
+            const rsiPeriod = parseInt(rsiPeriodInput.value);
+            const regime = marketRegimeSelect.value;
+            
+            const totalBars = 60;
+            let data =;
+            let currentPrice = regime === 'trendingDown'? 82000 : 70000;
+            let baseVol = 1200;
+            const now = new Date();
+
+            for (let i = 0; i < totalBars; i++) {
+                let changePercent = (Math.random() - 0.5) * 0.025;
+                
+                if (regime === 'trendingUp') {
+                    changePercent += 0.0035; // तेजी का पक्षपात
+                } else if (regime === 'trendingDown') {
+                    changePercent -= 0.0035; // मंदी का पक्षपात
+                } else if (regime === 'volatileChop') {
+                    changePercent += Math.sin(i / 2) * 0.018; // उतार-चढ़ाव चक्र
+                }
+
+                const open = currentPrice;
+                const close = currentPrice * (1 + changePercent);
+                const high = Math.max(open, close) * (1 + Math.random() * 0.006);
+                const low = Math.min(open, close) * (1 - Math.random() * 0.006);
+                const volume = baseVol * (0.6 + Math.random() * 1.4);
+
+                const time = new Date(now.getTime() - (totalBars - i) * 3600000);
+
+                data.push({
+                    time: time,
+                    open: parseFloat(open.toFixed(2)),
+                    high: parseFloat(high.toFixed(2)),
+                    low: parseFloat(low.toFixed(2)),
+                    close: parseFloat(close.toFixed(2)),
+                    volume: Math.round(volume)
+                });
+
+                currentPrice = close;
+            }
+
+            calculateIndicators(data, emaPeriod, rsiPeriod);
+            mockMarketData = data;
+
+            // अद्यतन संकेतक मान
+            const lastBar = data[data.length - 1];
+            emaPeriodLabel.textContent = emaPeriod;
+            rsiPeriodLabel.textContent = rsiPeriod;
+            currentEmaValueLabel.textContent = `$${lastBar.ema? lastBar.ema.toLocaleString(undefined, {minimumFractionDigits: 2}) : '--'}`;
+            currentRsiValueLabel.textContent = lastBar.rsi? lastBar.rsi.toFixed(2) : '--';
+
+            renderPriceChart();
+            renderRsiChart();
+        }
+
+        // तकनीकी संकेतक एल्गोरिदम [span_125](start_span)[span_125](end_span)[span_126](start_span)[span_126](end_span)[span_127](start_span)[span_127](end_span)
+        function calculateIndicators(data, emaLength, rsiLength) {
+            // 1. EMA गणना 
+            const k = 2 / (emaLength + 1);
+            let sum = 0;
+            for (let i = 0; i < emaLength; i++) {
+                sum += data[i].close;
+            }
+            let initialSma = sum / emaLength;
+            data[emaLength - 1].ema = [span_33](start_span)[span_33](end_span)[span_38](start_span)[span_38](end_span)initialSma;
+
+            for (let i = emaLength; i < data.length; i++) {
+                data[i].ema = (data[i].close * k) + (data[i - 1].ema * (1 - k));
+            }
+
+            // 2. RSI गणना 
+            let gains =;
+            let losses =;
+            for (let i = 1; i < data.length; i++) {
+                const diff = data[i].close - data[i - 1].close;
+                gains.push(diff > 0[span_51](start_span)[span_51](end_span)[span_54](start_span)[span_54](end_span)? diff : 0);
+                losses.push(diff < 0? Math.abs(diff) : 0);
+            }
+
+            let avgGain = gains.slice(0, rsiLength).reduce((a, b) => a + b, 0) / rsiLength;
+            let avgLoss = losses.slice(0, rsiLength).reduce((a, b) => a + b, 0) / rsiLength;
+
+            if (data[rsiLength]) {
+                const rs = avgGain / (avgLoss || 1);
+                data[rsiLength].rsi = 100 - (100 / (1 + rs));
+
+                for (let i = rsiLength + 1; i < data.length; i++) {
+                    avgGain = ((avgGain * (rsiLength - 1)) + gains[i - 1]) / rsiLength;
+                    avgLoss = ((avgLoss * (rsiLength - 1)) + losses[i - 1]) / rsiLength;
+                    const rsSmooth = avgGain / (avgLoss || 1);
+                    data[i].rsi = 100 - (100 / (1 + rsSmooth));
+                }
+            }
+        }
+
+        // मूल्य चार्ट आलेखन 
+        function renderPriceChart() {
+            const ctx = priceCanvas.get[span_96](start_span)[span_96](end_span)[span_98](start_span)[span_98](end_span)Context('2d');
+            const { width, height } = initCanvasScale(priceCanvas);
+
+            const highs = mockMarketData.map(d => d.high);
+            const lows = mockMarketData.map(d => d.low);
+            const maxPrice = Math.max(...highs) * 1.002;
+            const minPrice = Math.min(...lows) * 0.998;
+
+            const chartWidth = width - canvasPadding.left - canvasPadding.right;
+            const chartHeight = height - canvasPadding.top - canvasPadding.bottom;
+            const barWidth = chartWidth / mockMarketData.length;
+
+            function getX(index) {
+                return canvasPadding.left + index * barWidth + barWidth / 2;
+            }
+            function getY(price) {
+                return canvasPadding.top + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
+            }
+
+            // ग्रिडलाइन आलेखन [span_128](start_span)[span_128](end_span)
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            const gridCount = 5;
+            for (let i = 0; i <= gridCount; i++) {
+                const yVal = minPrice + (maxPrice - minPrice) * (i / gridCount);
+                const y = getY(yVal);
+                ctx.beginPath();
+                ctx.moveTo(canvasPadding.left, y);
+                ctx.lineTo(width - canvasPadding.right, y);
+                ctx.stroke();
+
+                ctx.fillStyle = '#64748b';
+                ctx.font = '9px monospace';
+                ctx.fillText(`$${Math.round(yVal).toLocaleString()}`, width - canvasPadding.right + 5, y + 3);
+            }
+
+            // कैंडलस्टिक पैटर्न बनाना 
+            mockMarketData.forEach((bar, idx) => {
+              [span_107](start_span)[span_107](end_span)  const x = getX(idx);
+                const yOpen = getY(bar.open);
+                const yClose = getY(bar.close);
+                const yHigh = getY(bar.high);
+                const yLow = getY(bar.low);
+
+                const isBullish = bar.close >= bar.open;
+    
